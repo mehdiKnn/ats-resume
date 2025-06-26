@@ -1,103 +1,341 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useRef } from 'react';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [editedCvData, setEditedCvData] = useState<unknown>(null);
+  const [cvData, setCvData] = useState<unknown>(null);
+  const [result, setResult] = useState<{
+    metadata: {
+      title: string;
+      author: string;
+      subject: string;
+      creator: string;
+      producer: string;
+      creationDate: string | null;
+      modificationDate: string | null;
+      pages: number;
+    };
+    sections: Array<{ title: string; content: string }>;
+    statistics: {
+      totalWords: number;
+      totalCharacters: number;
+      totalParagraphs: number;
+      totalSections: number;
+    };
+    processing: {
+      method: string;
+      timestamp: string;
+    };
+    images: {
+      count: number;
+      descriptions: string;
+      handling: string;
+      extracted: Array<{
+        id: number;
+        type: string;
+        description: string;
+      }>;
+    };
+    cv_data: unknown;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const paymentSectionRef = useRef<HTMLDivElement>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setError(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('pdf', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process PDF');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      setCvData(data.cv_data);
+      setEditedCvData(data.cv_data);
+      
+      // Auto-scroll to payment section after processing
+      setTimeout(() => {
+        paymentSectionRef.current?.scrollIntoView({ 
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const downloadJSON = () => {
+    if (!editedCvData) return;
+
+    const blob = new Blob([JSON.stringify(editedCvData, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${file?.name?.replace('.pdf', '') || 'cv-data'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const generatePDF = async () => {
+    if (!cvData) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/generate-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cvData: cvData
+        }),
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${file?.name?.replace('.pdf', '') || 'resume'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate PDF');
+      }
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during PDF generation';
+      setError(`PDF generation failed: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+      <div className="w-full">
+        <h1 className="text-4xl font-bold text-center mb-16 text-blue-600">
+          Transforme ton CV design en CV ATS<br />en seulement 1mn
+        </h1>
+        
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 max-w-lg mx-auto">
+          <div className="text-center">
+            {/* Cloud upload icon */}
+            <div className="mb-4">
+              <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            
+            <p className="text-base text-gray-600 mb-6">
+              Drag & drop your PDF file here or
+            </p>
+            
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange}
+              className="hidden"
+              id="pdf-upload"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <label
+              htmlFor="pdf-upload"
+              className="cursor-pointer inline-block px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            >
+              Choose PDF file
+            </label>
+            
+            {file && (
+              <p className="mt-3 text-sm text-gray-600">
+                Selected: {file.name}
+              </p>
+            )}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={handleUpload}
+            disabled={!file || loading}
+            className="px-12 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold text-lg"
+          >
+            {loading ? 'Processing...' : 'GO'}
+          </button>
+        </div>
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        {result && (
+          <div ref={paymentSectionRef} className="max-w-7xl mx-auto mt-8 min-h-screen">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-screen py-8">
+              {/* CV Preview */}
+              <div className="bg-gray-300 rounded-lg flex items-center justify-center min-h-[60vh] lg:min-h-full">
+                <div className="text-gray-600 text-lg">CV Preview</div>
+              </div>
+              
+              {/* Payment Section */}
+              <div className="bg-white rounded-lg p-6">
+                <h2 className="text-2xl font-bold text-blue-600 mb-4">Ton cv est prêt !</h2>
+                
+                <p className="text-gray-600 mb-4 text-sm">
+                  ton cv a bien était transformé et optimisé pour les logiciels ATS !
+                </p>
+                
+                {/* Features */}
+                <div className="mb-4 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 text-sm">Téléchargement immédiat après paiement</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 text-sm">Support client 24/7</span>
+                  </div>
+                </div>
+                
+                {/* Price */}
+                <div className="text-center mb-6">
+                  <div className="text-3xl font-bold text-blue-600 mb-3">0,99€</div>
+                  <button
+                    onClick={generatePDF}
+                    disabled={!cvData || loading}
+                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-semibold mb-4"
+                  >
+                    {loading ? 'Generating...' : '📥 Download'}
+                  </button>
+                </div>
+                
+                {/* Payment Form */}
+                <div className="border-t pt-4">
+                  <h3 className="text-base font-medium text-gray-400 mb-4">Stripe Payment Form</h3>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                      <input 
+                        type="email" 
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Card information</label>
+                      <div className="space-y-2">
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="1234 1234 1234 1234"
+                          />
+                          <div className="absolute right-3 top-2 flex gap-1">
+                            <div className="w-5 h-3 bg-blue-600 rounded text-xs text-white flex items-center justify-center">VISA</div>
+                            <div className="w-5 h-3 bg-red-600 rounded text-xs text-white flex items-center justify-center">MC</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input 
+                            type="text" 
+                            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="MM / YY"
+                          />
+                          <input 
+                            type="text" 
+                            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="CVC"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Cardholder name</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Full name on card"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Country or region</label>
+                      <select className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option>United States</option>
+                        <option>France</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <input 
+                        type="text" 
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="ZIP"
+                      />
+                    </div>
+                    
+                    <button className="w-full py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors font-medium">
+                      Pay
+                    </button>
+                    
+                    <p className="text-xs text-gray-500 text-center">
+                      By clicking Pay, you agree to the Link Terms and Privacy Policy.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
