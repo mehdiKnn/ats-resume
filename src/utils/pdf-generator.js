@@ -1,5 +1,5 @@
 // Helper function to escape LaTeX special characters
-const escapeLaTeX = (text: any): string => {
+const escapeLaTeX = (text) => {
   if (!text) return '';
   // Convert to string if text is not already a string
   const str = String(text);
@@ -11,7 +11,7 @@ const escapeLaTeX = (text: any): string => {
 };
 
 // Helper function to format dates
-const formatDate = (dateStr: any): string => {
+const formatDate = (dateStr) => {
   if (!dateStr) return '';
   try {
     const date = new Date(dateStr);
@@ -23,19 +23,13 @@ const formatDate = (dateStr: any): string => {
 };
 
 // Helper function to create hyperlinks
-const createHyperlink = (text: string, url: string): string => {
+const createHyperlink = (text, url) => {
   if (!text || !url) return escapeLaTeX(text || '');
   return `\\href{${escapeLaTeX(url)}}{${escapeLaTeX(text)}}`;
 };
 
-// Helper function to create list items
-const createListItems = (items: string[]): string => {
-  if (!items || !items.length) return '';
-  return items.map(item => `  \\resumeItem{${escapeLaTeX(item)}}`).join('\n');
-};
-
 // Generate LaTeX document header
-const generateHeader = (): string => {
+const generateHeader = () => {
   return `\\documentclass[letterpaper,11pt]{article}
 
 % Essential packages
@@ -134,7 +128,8 @@ const generateHeader = (): string => {
 `;
 };
 
-export const generateCVLatexTemplate = (cvData: any): string => {
+export const generateCVLatexTemplate = (cvData) => {
+
   // All section generator functions
   const sectionGenerators = {
     header: () => {
@@ -203,7 +198,7 @@ export const generateCVLatexTemplate = (cvData: any): string => {
       const experience = cvData.cv_template.sections.experience;
       if (!experience?.items?.length) return '';
 
-      const experienceItems = experience.items.map((job: any) => {
+      const experienceItems = experience.items.map((job) => {
         if (!job) return '';
 
         const startDate = formatDate(job.dates?.start);
@@ -216,7 +211,7 @@ export const generateCVLatexTemplate = (cvData: any): string => {
       {${escapeLaTeX(company)}}{${startDate} -- ${endDate}}
       {${escapeLaTeX(title)}}{${escapeLaTeX(location)}}
       ${job.achievements?.length ? `\\resumeItemListStart
-        ${job.achievements.map((achievement: string) =>
+        ${job.achievements.map((achievement) =>
                     `\\resumeItem{${escapeLaTeX(achievement || '')}}`
                 ).join('\n        ')}
       \\resumeItemListEnd` : ''}`
@@ -235,7 +230,7 @@ ${experienceItems}
       const education = cvData.cv_template.sections.education;
       if (!education?.items?.length) return '';
 
-      const educationItems = education.items.map((edu: any) => {
+      const educationItems = education.items.map((edu) => {
         if (!edu) return '';
 
         const startDate = formatDate(edu.dates?.start);
@@ -261,15 +256,15 @@ ${educationItems}
       if (!skills?.categories?.length) return '';
 
       // Only include categories that have items
-      const validCategories = skills.categories.filter((category: any) =>
-        category?.items?.length && category.items.some((item: any) => item && typeof item === 'string' && item.trim())
+      const validCategories = skills.categories.filter((category) =>
+        category?.items?.length && category.items.some((item) => item && typeof item === 'string' && item.trim())
       );
 
       if (!validCategories.length) return '';
 
-      const skillCategories = validCategories.map((category: any) => `    \\resumeSubheading
+      const skillCategories = validCategories.map((category) => `    \\resumeSubheading
       {${escapeLaTeX(category.name)}}{}
-      {${category.items.filter(Boolean).map((skill: string) => escapeLaTeX(skill)).join(' | ')}}{}
+      {${category.items.filter(Boolean).map((skill) => escapeLaTeX(skill)).join(' | ')}}{}
     `).join('\n');
 
       return `
@@ -283,13 +278,13 @@ ${skillCategories}
       const projects = cvData.cv_template.sections.projects;
       if (!projects?.items?.length) return '';
 
-      const projectItems = projects.items.map((project: any) => {
+      const projectItems = projects.items.map((project) => {
         if (!project) return '';
         
         return `    \\projectEntry{${createHyperlink(project.title || '', project.url || '')}}{}
     \\resumeParagraph{${escapeLaTeX(project.description || '')}}
     ${project.technologies?.length ? `\\resumeItemListStart
-      \\resumeItem{Technologies: ${project.technologies.map((tech: string) => escapeLaTeX(tech || '')).join(', ')}}
+      \\resumeItem{Technologies: ${project.technologies.map((tech) => escapeLaTeX(tech || '')).join(', ')}}
     \\resumeItemListEnd` : ''}`
       }).filter(Boolean).join('\n\n');
 
@@ -306,7 +301,7 @@ ${projectItems}
       const certifications = cvData.cv_template.sections.certifications || cvData.cv_template.sections['certifications or courses'];
       if (!certifications?.items?.length) return '';
 
-      const certItems = certifications.items.map((cert: any) => {
+      const certItems = certifications.items.map((cert) => {
         if (!cert) return '';
         
         return `    \\resumeSubheading
@@ -327,7 +322,7 @@ ${certItems}
       const languages = cvData.cv_template.sections.languages;
       if (!languages?.items?.length) return '';
 
-      const languageItems = languages.items.map((lang: any) => {
+      const languageItems = languages.items.map((lang) => {
         if (!lang) return '';
         
         return `    \\resumeSubheading
@@ -348,7 +343,7 @@ ${languageItems}
       const volunteer = cvData.cv_template.sections.volunteer;
       if (!volunteer?.items?.length) return '';
 
-      const volunteerItems = volunteer.items.map((vol: any) => {
+      const volunteerItems = volunteer.items.map((vol) => {
         if (!vol) return '';
 
         const startDate = formatDate(vol.dates?.start);
@@ -359,7 +354,7 @@ ${languageItems}
       {${escapeLaTeX(vol.organization || '')}}{${dateString}}
       {${escapeLaTeX(vol.title || '')}}{${escapeLaTeX(vol.location || '')}}
       ${vol.achievements?.length ? `\\resumeItemListStart
-        ${vol.achievements.map((achievement: string) =>
+        ${vol.achievements.map((achievement) =>
                     `\\resumeItem{${escapeLaTeX(achievement || '')}}`
                 ).join('\n        ')}
       \\resumeItemListEnd` : ''}`;
@@ -378,7 +373,7 @@ ${volunteerItems}
       const achievements = cvData.cv_template.sections.achievements;
       if (!achievements?.items?.length) return '';
 
-      const achievementItems = achievements.items.map((achievement: any) => {
+      const achievementItems = achievements.items.map((achievement) => {
         if (!achievement) return '';
         
         return `    \\resumeSubheading
@@ -399,7 +394,7 @@ ${achievementItems}
       const publications = cvData.cv_template.sections.publications;
       if (!publications?.items?.length) return '';
 
-      const pubItems = publications.items.map((pub: any) => {
+      const pubItems = publications.items.map((pub) => {
         if (!pub) return '';
         
         return `    \\resumeSubheading
@@ -422,14 +417,14 @@ ${pubItems}
 
       // Filter out empty, null, or non-string items and ensure strings
       const validItems = interests.items
-        .filter((item: any) => item && typeof item === 'string' && item.trim().length > 0);
+        .filter((item) => item && typeof item === 'string' && item.trim().length > 0);
 
       if (!validItems.length) return '';
 
       return `
 \\section{${escapeLaTeX(interests.section_title || 'Interests')}}
   \\resumeSubHeadingListStart
-    \\resumeParagraph{${validItems.map((interest: string) => escapeLaTeX(interest)).join(' | ')}}
+    \\resumeParagraph{${validItems.map((interest) => escapeLaTeX(interest)).join(' | ')}}
   \\resumeSubHeadingListEnd`;
     },
 
@@ -437,7 +432,7 @@ ${pubItems}
       const patents = cvData.cv_template.sections.patents;
       if (!patents?.items?.length) return '';
 
-      const patentItems = patents.items.map((patent: any) => {
+      const patentItems = patents.items.map((patent) => {
         if (!patent) return '';
         
         return `    \\resumeSubheading
@@ -458,7 +453,7 @@ ${patentItems}
       const research = cvData.cv_template.sections.research;
       if (!research?.items?.length) return '';
 
-      const researchItems = research.items.map((item: any) => {
+      const researchItems = research.items.map((item) => {
         if (!item) return '';
         
         return `      \\resumeParagraph{${escapeLaTeX(item.description || '')}}`;
@@ -473,11 +468,36 @@ ${researchItems}
   \\resumeSubHeadingListEnd`;
     },
 
+    references: () => {
+      const references = cvData.cv_template.sections.references;
+      if (!references?.items?.length) return '';
+
+      const referenceItems = references.items.map((ref) => {
+        if (!ref) return '';
+        
+        const contactInfo = [];
+        if (ref.email) contactInfo.push(`Email: ${escapeLaTeX(ref.email)}`);
+        if (ref.phone) contactInfo.push(`Phone: ${escapeLaTeX(ref.phone)}`);
+        
+        return `    \\resumeSubheading
+      {${escapeLaTeX(ref.name || '')}}{${escapeLaTeX(ref.company || '')}}
+      {${escapeLaTeX(ref.title || '')}}{${contactInfo.join(' | ')}}`;
+      }).filter(Boolean).join('\n');
+
+      if (!referenceItems) return '';
+
+      return `
+\\section{${escapeLaTeX(references.section_title || 'References')}}
+  \\resumeSubHeadingListStart
+${referenceItems}
+  \\resumeSubHeadingListEnd`;
+    },
+
     custom: () => {
       const custom = cvData.cv_template.sections.custom;
       if (!custom?.items?.length) return '';
 
-      const customItems = custom.items.map((item: any) => {
+      const customItems = custom.items.map((item) => {
         if (!item) return '';
         
         return `    \\resumeSubheading
@@ -499,16 +519,16 @@ ${customItems}
   const defaultSectionOrder = [
     'header', 'summary', 'experience', 'education', 'skills', 
     'projects', 'certifications', 'languages', 'volunteer', 
-    'achievements', 'publications', 'interests', 'patents', 
-    'research', 'custom'
+    'achievements', 'publications', 'interests', 'references', 
+    'patents', 'research', 'custom'
   ];
   
   const sectionOrder = cvData.cv_template.metadata?.section_order || defaultSectionOrder;
 
   // Generate content based on metadata order
   const content = sectionOrder
-    .map((sectionName: string) => {
-      if (!sectionGenerators[sectionName as keyof typeof sectionGenerators]) return '';
+    .map((sectionName) => {
+      if (!sectionGenerators[sectionName]) return '';
 
       const sectionData = cvData.cv_template.sections[sectionName];
       if (!sectionData) return '';
@@ -517,7 +537,7 @@ ${customItems}
       if (sectionName === 'header') {
         const header = sectionData;
         const hasContactInfo = header.contact_info &&
-          Object.values(header.contact_info).some((info: any) => info?.value?.trim());
+          Object.values(header.contact_info).some((info) => info?.value?.trim());
         const hasName = header.name?.trim();
         if (!hasContactInfo && !hasName) return '';
       }
@@ -528,21 +548,21 @@ ${customItems}
 
       if (Array.isArray(sectionData.items)) {
         // For sections with items array, ensure there are valid items
-        const hasValidItems = sectionData.items?.some((item: any) => {
+        const hasValidItems = sectionData.items?.some((item) => {
           if (!item) return false;
           // For text-only items
           if (typeof item === 'string') return item.trim().length > 0;
           // For object items, check if they have any non-empty required fields
-          return Object.values(item).some((val: any) =>
+          return Object.values(item).some((val) =>
             val && (typeof val === 'string' ? val.trim().length > 0 : true)
           );
         });
         if (!hasValidItems) return '';
       }
 
-      return sectionGenerators[sectionName as keyof typeof sectionGenerators]();
+      return sectionGenerators[sectionName]();
     })
-    .filter((section: string) => section.trim() !== '') // Remove empty sections
+    .filter((section) => section.trim() !== '') // Remove empty sections
     .join('\n\n');
 
   // Combine everything

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { generateCVLatexTemplate } from '@/utils/pdf-generator';
 import latex from 'node-latex';
 import fs from 'fs';
@@ -8,7 +8,7 @@ import { promisify } from 'util';
 const writeFileAsync = promisify(fs.writeFile);
 const unlinkAsync = promisify(fs.unlink);
 
-export async function POST(request: NextRequest) {
+export async function POST(request) {
   try {
     const { cvData } = await request.json();
 
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest) {
       await writeFileAsync(texFilePath, latexContent);
 
       // Generate PDF using node-latex
-      const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
-        const chunks: Buffer[] = [];
+      const pdfBuffer = await new Promise((resolve, reject) => {
+        const chunks = [];
         
         // Enhanced options for node-latex
         const latexOptions = {
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
         const pdfStream = latex(latexContent, latexOptions);
 
-        pdfStream.on('data', (chunk: Buffer) => {
+        pdfStream.on('data', (chunk) => {
           chunks.push(chunk);
         });
 
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           resolve(buffer);
         });
 
-        pdfStream.on('error', (err: Error) => {
+        pdfStream.on('error', (err) => {
           console.error('LaTeX compilation error:', err);
           console.error('Error details:', err.message);
           

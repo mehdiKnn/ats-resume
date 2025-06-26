@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { Mistral } from '@mistralai/mistralai';
-import { generateLatexFromSchema } from '@/utils/latex-generator';
+import { generateCVLatexTemplate } from '@/utils/pdf-generator';
 
-export async function POST(request: NextRequest) {
+export async function POST(request) {
   try {
     const formData = await request.formData();
-    const file = formData.get('pdf') as File;
+    const file = formData.get('pdf');
 
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
@@ -37,19 +37,17 @@ export async function POST(request: NextRequest) {
         type: 'document_url',
         documentUrl: dataUri
       },
-      includeImageBase64: true
+      includeImageBase64: false
     });
     
     // Handle multi-page PDFs by combining all pages with better formatting
     let extractedText = '';
-    let extractedImages: unknown[] = [];
-    let structuredPages: Array<{pageNumber: number, content: string, images: unknown[]}> = [];
+    let structuredPages = [];
     
     if (ocrResponse.pages && ocrResponse.pages.length > 0) {
-      structuredPages = ocrResponse.pages.map((page: { markdown?: string; images?: unknown[] }, index: number) => ({
+      structuredPages = ocrResponse.pages.map((page, index) => ({
         pageNumber: index + 1,
-        content: page.markdown || '',
-        images: page.images || []
+        content: page.markdown || ''
       }));
       
       // Clean and preserve markdown formatting
@@ -69,9 +67,6 @@ export async function POST(request: NextRequest) {
           return content;
         })
         .join('\n\n---PAGE BREAK---\n\n');
-      
-      extractedImages = ocrResponse.pages
-        .flatMap((page: { images?: unknown[] }) => page.images || []);
     }
     
     if (!extractedText.trim()) {
@@ -81,31 +76,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let imageDescriptions = '';
-    if (extractedImages.length > 0) {
-      const imageAnalysisPrompt = `Analyse ces ${extractedImages.length} image(s) provenant d'un CV et fournis des descriptions professionnelles brèves pertinentes pour les systèmes ATS. Focus sur :
-- Photos professionnelles : "[Photo professionnelle]"
-- Logos d'entreprise : "[Logo : Nom de l'entreprise]"
-- Graphiques/diagrammes : Décris les données présentées
-- Certificats : "[Certificat : Nom du certificat]"
-- Autre contenu visuel pertinent
-
-Images trouvées : ${extractedImages.length} image(s)
-Fournis les descriptions séparées par des retours à la ligne.`;
-
-      const imageResponse = await mistralClient.chat.complete({
-        model: 'mistral-small-latest',
-        messages: [
-          {
-            role: 'user',
-            content: imageAnalysisPrompt
-          }
-        ],
-        max_tokens: 500
-      });
-      
-      imageDescriptions = imageResponse.choices?.[0]?.message?.content || '';
-    }
  // TODO :  Add language level inspection and extraction, Regroup interest by categories, Fix modification, fix pdf generation
     const cvDataResponse = await mistralClient.chat.complete({
       model: 'mistral-small-latest',
@@ -316,30 +286,31 @@ ${extractedText}`
       maxTokens: 4000
     });
 
-    let cvData: unknown = null;
-    let cvSections: { title: string; content: string }[] = [];
+    let cvData = null;
+    let cvSections = [];
     
     try {
       const cvContent = cvDataResponse.choices?.[0]?.message?.content || '';
-      const jsonMatch = cvContent.match(/\{[\s\S]*\}/);
+      const contentString = typeof cvContent === 'string' ? cvContent : '';
+      const jsonMatch = contentString.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         cvData = JSON.parse(jsonMatch[0]);
         
         // Create backward-compatible sections for display
-        const cvDataTyped = cvData as { cv_template?: { sections?: Record<string, unknown> } };
+        const cvDataTyped = cvData;
         const sections = cvDataTyped.cv_template?.sections || {};
         
-        const headerSection = sections.header as { name?: string; title?: string } | undefined;
+        const headerSection = sections.header;
         if (headerSection) {
           cvSections.push({ title: 'En-tête', content: `${headerSection.name || ''}\n${headerSection.title || ''}` });
         }
         
-        const summarySection = sections.summary as { section_title?: string; content?: string } | undefined;
+        const summarySection = sections.summary;
         if (summarySection) {
           cvSections.push({ title: summarySection.section_title || 'Summary', content: summarySection.content || '' });
         }
         
-        const experienceSection = sections.experience as { section_title?: string; items?: Array<{ title?: string; company?: string; dates?: { start?: string; end?: string } }> } | undefined;
+        const experienceSection = sections.experience;
         if (experienceSection?.items?.length) {
           const content = experienceSection.items.map((item) => 
             `${item.title || ''} - ${item.company || ''} (${item.dates?.start || ''} - ${item.dates?.end || ''})`
@@ -347,7 +318,7 @@ ${extractedText}`
           cvSections.push({ title: experienceSection.section_title || 'Experience', content });
         }
         
-        const educationSection = sections.education as { section_title?: string; items?: Array<{ degree?: string; institution?: string; dates?: { start?: string; end?: string } }> } | undefined;
+        const educationSection = sections.education;
         if (educationSection?.items?.length) {
           const content = educationSection.items.map((item) => 
             `${item.degree || ''} - ${item.institution || ''} (${item.dates?.start || ''} - ${item.dates?.end || ''})`
@@ -355,7 +326,7 @@ ${extractedText}`
           cvSections.push({ title: educationSection.section_title || 'Education', content });
         }
         
-        const skillsSection = sections.skills as { section_title?: string; categories?: Array<{ name?: string; items?: string[] }> } | undefined;
+        const skillsSection = sections.skills;
         if (skillsSection?.categories?.length) {
           const content = skillsSection.categories.map((cat) => 
             `${cat.name || ''}: ${(cat.items || []).join(', ')}`
@@ -370,18 +341,20 @@ ${extractedText}`
 
     // Generate LaTeX from structured data if available
     let latex = '';
-    if (cvData && (cvData as { cv_template?: unknown }).cv_template) {
+    if (cvData && cvData.cv_template) {
       try {
-        latex = generateLatexFromSchema(cvData as Parameters<typeof generateLatexFromSchema>[0]);
+        latex = generateCVLatexTemplate(cvData);
       } catch (latexError) {
         console.warn('Failed to generate LaTeX from schema:', latexError);
       }
     }
     
+    const cvDataTyped = cvData;
+    
     const structuredData = {
       metadata: {
         title: 'CV Document',
-        author: cvData?.cv_template?.sections?.header?.name || 'Unknown',
+        author: cvDataTyped?.cv_template?.sections?.header?.name || 'Unknown',
         subject: 'Resume/CV',
         creator: 'Mistral Document AI',
         producer: 'CV Processor',
@@ -397,8 +370,7 @@ ${extractedText}`
         pages: structuredPages.map((page) => ({
           pageNumber: page.pageNumber,
           text: page.content.trim(),
-          wordCount: page.content.trim().split(/\s+/).filter(word => word.length > 0).length,
-          images: page.images.length
+          wordCount: page.content.trim().split(/\s+/).filter(word => word.length > 0).length
         })),
         paragraphs: extractedText
           .split(/\n\s*\n/)
@@ -408,16 +380,6 @@ ${extractedText}`
             text: paragraph.trim().replace(/\s+/g, ' '),
             wordCount: paragraph.trim().split(/\s+/).filter(word => word.length > 0).length,
           })),
-      },
-      images: {
-        count: extractedImages.length,
-        descriptions: imageDescriptions,
-        handling: 'Compatible ATS : Images remplacées par des placeholders texte',
-        extracted: extractedImages.map((img: unknown, index: number) => ({
-          id: index + 1,
-          type: (img as { type?: string })?.type || 'unknown',
-          description: `Image ${index + 1}`,
-        }))
       },
       latex: latex,
       statistics: {

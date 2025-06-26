@@ -3,48 +3,14 @@
 import { useState, useRef } from 'react';
 
 export default function Home() {
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [editedCvData, setEditedCvData] = useState<unknown>(null);
-  const [cvData, setCvData] = useState<unknown>(null);
-  const [result, setResult] = useState<{
-    metadata: {
-      title: string;
-      author: string;
-      subject: string;
-      creator: string;
-      producer: string;
-      creationDate: string | null;
-      modificationDate: string | null;
-      pages: number;
-    };
-    sections: Array<{ title: string; content: string }>;
-    statistics: {
-      totalWords: number;
-      totalCharacters: number;
-      totalParagraphs: number;
-      totalSections: number;
-    };
-    processing: {
-      method: string;
-      timestamp: string;
-    };
-    images: {
-      count: number;
-      descriptions: string;
-      handling: string;
-      extracted: Array<{
-        id: number;
-        type: string;
-        description: string;
-      }>;
-    };
-    cv_data: unknown;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const paymentSectionRef = useRef<HTMLDivElement>(null);
+  const [cvData, setCvData] = useState(null);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const paymentSectionRef = useRef(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
@@ -74,7 +40,6 @@ export default function Home() {
       const data = await response.json();
       setResult(data);
       setCvData(data.cv_data);
-      setEditedCvData(data.cv_data);
       
       // Auto-scroll to payment section after processing
       setTimeout(() => {
@@ -89,24 +54,6 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-
-  const downloadJSON = () => {
-    if (!editedCvData) return;
-
-    const blob = new Blob([JSON.stringify(editedCvData, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${file?.name?.replace('.pdf', '') || 'cv-data'}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const generatePDF = async () => {
     if (!cvData) return;
     
