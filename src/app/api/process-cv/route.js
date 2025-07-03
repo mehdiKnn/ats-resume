@@ -4,7 +4,7 @@ import { generateCVLatexTemplate } from '@/utils/pdf-generator';
 
 export async function POST(request) {
   try {
-    const { extractedText, metadata } = await request.json();
+    const { extractedText } = await request.json();
     
     if (!extractedText) {
       return NextResponse.json({ error: 'No text provided for processing' }, { status: 400 });
