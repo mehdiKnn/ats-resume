@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import PDFPreview from '@/components/PDFPreview';
 
 export default function Home() {
   const [file, setFile] = useState(null);
@@ -156,9 +157,7 @@ export default function Home() {
           <div ref={paymentSectionRef} className="max-w-7xl mx-auto mt-8 min-h-screen">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-screen py-8">
               {/* CV Preview */}
-              <div className="bg-gray-300 rounded-lg flex items-center justify-center min-h-[60vh] lg:min-h-full">
-                <div className="text-gray-600 text-lg">CV Preview</div>
-              </div>
+              <PDFPreview cvData={cvData} />
               
               {/* Payment Section */}
               <div className="bg-white rounded-lg p-6">
