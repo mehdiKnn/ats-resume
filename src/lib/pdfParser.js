@@ -7,25 +7,20 @@ if (typeof window === 'undefined') {
     // Try local worker first
     const workerPath = path.resolve('node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs');
     GlobalWorkerOptions.workerSrc = `file://${workerPath}`;
-    console.log('PDF Parser: Using local worker:', workerPath);
-  } catch (workerError) {
+  } catch {
     // Fallback to CDN worker
     GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs';
-    console.log('PDF Parser: Using CDN worker (fallback):', workerError.message);
   }
 }
 
 export async function parsePDF(file) {
   try {
-    console.log('PDF Parser: Starting PDF parsing...');
     const arrayBuffer = await file.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    console.log('PDF Parser: File converted to array buffer');
     
     // Parse PDF using pdfjs-dist
     const loadingTask = getDocument({ data: uint8Array });
     const pdf = await loadingTask.promise;
-    console.log('PDF Parser: PDF document loaded successfully');
     const numPages = pdf.numPages;
 
     let extractedText = '';

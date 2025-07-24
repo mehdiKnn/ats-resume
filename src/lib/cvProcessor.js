@@ -3,7 +3,6 @@ import { generateCVLatexTemplate } from '@/utils/pdf-generator';
 
 export async function processCVWithAI(extractedText = {}) {
   try {
-    console.log('CV Processor: Starting AI processing...');
     if (!extractedText) {
       throw new Error('No text provided for processing');
     }
@@ -12,7 +11,6 @@ export async function processCVWithAI(extractedText = {}) {
       throw new Error('Gemini API key is required. Please configure GEMINI_API_KEY environment variable.');
     }
 
-    console.log('CV Processor: Initializing Gemini AI...');
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
@@ -21,6 +19,7 @@ Use the CV Text to fill the JSON sections schema below
 - Do not modify the JSON schema, respect it strictly
 - Respect the "rendering_rules" in the JSON when filling the section JSON sections key.
 - If there is a full month in any language use for example Jan over Janvier ( French ) or Enero ( Spanish)
+- Custom sections should be used for any additional information not covered by the standard sections. The section_title should be updated to reflect the custom content.
 {
   "cv_template": {
     "metadata": {
@@ -39,11 +38,11 @@ Use the CV Text to fill the JSON sections schema below
         }
       },
       "summary": {
-        "section_title": "Summary",
+        "section_title": "Présentation",
         "content": "Brief professional summary highlighting your experience, skills, and career goals."
       },
       "experience": {
-        "section_title": "Professional Experience",
+        "section_title": "Expériences Professionnelles",
         "items": [
           {
             "type": "job",
@@ -58,7 +57,7 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "education": {
-        "section_title": "Education",
+        "section_title": "Diplômes",
         "items": [
           {
             "degree": "Degree Title",
@@ -72,7 +71,7 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "skills": {
-        "section_title": "Skills",
+        "section_title": "Compétences",
         "categories": [
           {
             "name": "Technical Skills",
@@ -89,7 +88,7 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "projects": {
-        "section_title": "Projects",
+        "section_title": "Projets",
         "items": [
           {
             "title": "Project Title",
@@ -113,13 +112,13 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "languages": {
-        "section_title": "Languages",
+        "section_title": "Langues",
         "items": [
           {"name": "Language", "proficiency": "Proficiency Level"}
         ]
       },
       "volunteer": {
-        "section_title": "Volunteer Experience",
+        "section_title": "Bénévolat",
         "items": [
           {
             "title": "Volunteer Role",
@@ -131,7 +130,7 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "achievements": {
-        "section_title": "Awards & Achievements",
+        "section_title": "Réalisations & Distinctions",
         "items": [
           {
             "organization": "Example Organization",
@@ -151,11 +150,11 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "interests": {
-        "section_title": "Interests",
+        "section_title": "Centres d'Intérêt",
         "items": ["Interest 1", "Interest 2"]
       },
       "references": {
-        "section_title": "References",
+        "section_title": "Références",
         "items": [
           {
             "name": "Reference Name",
@@ -167,7 +166,7 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "patents": {
-        "section_title": "Patents",
+        "section_title": "Brevets",
         "items": [
           {
             "title": "Patent Title",
@@ -178,7 +177,7 @@ Use the CV Text to fill the JSON sections schema below
         ]
       },
       "research": {
-        "section_title": "Research",
+        "section_title": "Recherches",
         "items": [
           {
             "title": "Research Title",
