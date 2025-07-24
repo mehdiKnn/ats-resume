@@ -1,5 +1,6 @@
 'use client';
 
+import './polyfills';
 import { useState, useRef } from 'react';
 import Image from 'next/image';
 import PDFPreview from '@/components/PDFPreview';

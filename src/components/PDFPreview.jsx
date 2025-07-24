@@ -109,7 +109,7 @@ export default function PDFPreview({ cvData }) {
             <Page
               key={`page_${index + 1}`}
               pageNumber={index + 1}
-              width={Math.min(600, window.innerWidth - 100)}
+              width={typeof window !== 'undefined' ? Math.min(600, window.innerWidth - 100) : 600}
               renderTextLayer={false}
               renderAnnotationLayer={false}
               className="mb-4 shadow-md"
