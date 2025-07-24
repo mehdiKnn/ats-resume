@@ -19,7 +19,7 @@ Use the CV Text to fill the JSON sections schema below
 - Do not modify the JSON schema, respect it strictly
 - Respect the "rendering_rules" in the JSON when filling the section JSON sections key.
 - If there is a full month in any language use for example Jan over Janvier ( French ) or Enero ( Spanish)
-- Custom sections should be used for any additional information not covered by the standard sections. The section_title should be updated to reflect the custom content.
+- Custom sections should be used for any additional information not covered by the standard sections. The section_title should be updated to reflect the custom content and in the same language as the cv information.
 {
   "cv_template": {
     "metadata": {
