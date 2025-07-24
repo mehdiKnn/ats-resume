@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import PDFPreview from '@/components/PDFPreview';
 
 export default function Home() {
@@ -127,37 +128,47 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundImage: 'url(/background_blur.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div className="min-h-screen flex flex-col relative">
+      <Image
+        src="/background_blur.png"
+        alt="Background"
+        fill
+        className="object-cover -z-10"
+        priority
+      />
       {/* Header */}
-      <header className="flex justify-between items-center p-4 sm:p-6">
-        <h1 className="text-xl sm:text-2xl font-roboto font-black text-black">
+      <header className="flex items-center justify-between p-4 sm:p-6">
+        <h1 className="text-xl font-black text-black sm:text-2xl font-roboto">
           ResumeATS
         </h1>
-        <button className="px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-roboto font-bold">
-          contact
+        <button 
+          type="button"
+          className="px-3 py-2 text-sm font-bold text-white transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 sm:px-4 sm:py-2 sm:text-base font-roboto"
+        >
+          Contact
         </button>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-roboto font-black text-black mb-4 leading-tight">
+      <main className="flex flex-col items-center justify-center flex-1">
+        <div className="mb-6 text-center sm:mb-8">
+          <h2 className="mb-4 text-3xl font-black leading-tight text-black sm:text-4xl lg:text-5xl font-roboto">
             Transforme 🚀 ton CV design<br />
             en Cv ATS en seulement 1mn ⚡
           </h2>
-          <p className="text-gray-800 text-lg sm:text-xl font-roboto font-medium px-4 sm:px-0">
+          <p className="px-4 text-lg font-medium text-gray-800 sm:px-0 sm:text-xl font-roboto">
             Fais partie des CV que les recruteurs lisent vraiment
           </p>
         </div>
         
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-12 mb-6 sm:mb-8 max-w-xs sm:max-w-lg lg:max-w-2xl mx-auto w-full">
+        <div className="w-full max-w-xs mx-auto mb-6 p-6 bg-white shadow-lg rounded-2xl sm:max-w-lg sm:mb-8 sm:p-8 lg:max-w-2xl lg:p-12">
           <div className="text-center">
             {/* Drag and Drop Area */}
             <div 
-              className={`border-2 border-dashed rounded-lg p-8 mb-6 cursor-pointer transition-colors ${
+              className={`p-8 mb-6 transition-colors border-2 border-dashed rounded-lg cursor-pointer ${
                 isDragging 
-                  ? 'border-orange-500 bg-orange-50' 
-                  : 'border-gray-300 hover:border-orange-400 hover:bg-gray-50'
+                  ? 'bg-orange-50 border-orange-500' 
+                  : 'border-gray-300 hover:bg-gray-50 hover:border-orange-400'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -166,12 +177,12 @@ export default function Home() {
             >
               {/* Upload icon */}
               <div className="mb-4">
-                <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-12 h-12 mx-auto text-orange-500 sm:w-16 sm:h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
               
-              <p className="text-base sm:text-lg text-gray-600 font-roboto">
+              <p className="text-base text-gray-600 sm:text-lg font-roboto">
                 Cliquez ici ou glissez votre PDF
               </p>
               
@@ -181,6 +192,7 @@ export default function Home() {
                 accept=".pdf"
                 onChange={handleFileChange}
                 className="hidden"
+                aria-label="Upload PDF file"
               />
             </div>
             
@@ -191,9 +203,10 @@ export default function Home() {
             )}
             
             <button
+              type="button"
               onClick={handleUpload}
               disabled={!file || loading}
-              className="px-6 py-3 sm:px-8 sm:py-4 lg:px-10 lg:py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-roboto font-bold text-base sm:text-lg"
+              className="px-6 py-3 text-base font-bold text-white transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed sm:px-8 sm:py-4 sm:text-lg lg:px-10 lg:py-4 font-roboto"
             >
               {loading ? 'Processing...' : 'Optimiser mon CV'}
             </button>
@@ -201,24 +214,24 @@ export default function Home() {
         </div>
 
         {/* Trust indicators */}
-        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 text-xs sm:text-sm px-4 sm:px-0">
+        <div className="flex flex-wrap justify-center gap-4 px-4 mb-6 text-xs sm:gap-6 sm:px-0 sm:mb-8 sm:text-sm lg:gap-8">
           <div className="flex items-center gap-2">
             <span className="text-2xl">✅</span>
-            <span className="text-gray-700 font-roboto text-xs sm:text-sm">100 % sécurisé</span>
+            <span className="text-xs text-gray-700 sm:text-sm font-roboto">100 % sécurisé</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">📄</span>
-            <span className="text-gray-700 font-roboto text-xs sm:text-sm">+10 000 CV optimisés</span>
+            <span className="text-xs text-gray-700 sm:text-sm font-roboto">+10 000 CV optimisés</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">💸</span>
-            <span className="text-gray-700 font-roboto text-xs sm:text-sm">Satisfait ou remboursé</span>
+            <span className="text-xs text-gray-700 sm:text-sm font-roboto">Satisfait ou rembourse</span>
           </div>
         </div>
 
 
         {error && (
-          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <div className="p-4 mt-4 text-red-700 bg-red-100 border border-red-400 rounded-lg">
             {error}
           </div>
         )}
@@ -226,10 +239,10 @@ export default function Home() {
         {result && (
           <div ref={paymentSectionRef} className="w-full">
             <div className="min-h-screen pb-16">
-              <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+              <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
                 {/* CV Preview - Left Side - Centered */}
-                <div className="p-4 sm:p-8 flex items-center justify-center">
-                  <div className="h-[80vh] overflow-y-auto overflow-x-auto">
+                <div className="flex items-center justify-center p-4 sm:p-8">
+                  <div className="h-[80vh] overflow-x-auto overflow-y-auto">
                     <div className="min-w-fit">
                       <PDFPreview cvData={cvData} />
                     </div>
@@ -237,15 +250,15 @@ export default function Home() {
                 </div>
                 
                 {/* CV Benefits - Right Side - Centered */}
-                <div className="p-8 flex flex-col items-center justify-center">
-                  <div className="max-w-md w-full">
+                <div className="flex flex-col items-center justify-center p-8">
+                  <div className="w-full max-w-md">
                     {/* Header with celebration emoji */}
-                    <div className="text-center mb-8">
-                      <div className="text-4xl mb-4">🎉</div>
-                      <h2 className="text-3xl font-roboto font-black text-black mb-4">
+                    <div className="mb-8 text-center">
+                      <div className="mb-4 text-4xl">🎉</div>
+                      <h2 className="mb-4 text-3xl font-black text-black font-roboto">
                         Ton CV optimisé est prêt !
                       </h2>
-                      <p className="text-gray-600 text-lg font-roboto mb-8">
+                      <p className="mb-8 text-lg text-gray-600 font-roboto">
                         Il est maintenant parfaitement lisible par les logiciels de recrutement ATS.
                       </p>
                     </div>
@@ -253,45 +266,46 @@ export default function Home() {
                     {/* CV Benefits */}
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                        <div className="flex items-center justify-center w-5 h-5 bg-green-500 rounded">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-gray-700 text-base font-roboto">Ton CV a bien été transformé pour les ATS</span>
+                        <span className="text-base text-gray-700 font-roboto">Ton CV a bien été transformé pour les ATS</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                        <div className="flex items-center justify-center w-5 h-5 bg-green-500 rounded">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-gray-700 text-base font-roboto">Prêt à l'emploi</span>
+                        <span className="text-base text-gray-700 font-roboto">Prêt à l'emploi</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                        <div className="flex items-center justify-center w-5 h-5 bg-green-500 rounded">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-gray-700 text-base font-roboto">Optimisé par IA</span>
+                        <span className="text-base text-gray-700 font-roboto">Optimisé par IA</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                        <div className="flex items-center justify-center w-5 h-5 bg-green-500 rounded">
                           <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-gray-700 text-base font-roboto">ATS friendly</span>
+                        <span className="text-base text-gray-700 font-roboto">ATS friendly</span>
                       </div>
                     </div>
                     
                     {/* Download Button */}
                     <div className="mt-8">
                       <button
+                        type="button"
                         onClick={generatePDF}
                         disabled={!cvData || loading}
-                        className="w-full py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors font-roboto font-bold text-lg"
+                        className="w-full py-4 text-lg font-bold text-white transition-colors bg-orange-500 rounded-lg hover:bg-orange-600 disabled:opacity-50 font-roboto"
                       >
                         {loading ? 'Génération...' : 'Télécharger mon CV optimisé'}
                       </button>
@@ -302,15 +316,15 @@ export default function Home() {
             </div>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Footer - Only show when not in results view */}
 
-        <footer className="flex flex-wrap justify-center sm:justify-start items-center p-4 sm:p-6 gap-4 sm:gap-6 lg:gap-8">
-          <span className="text-gray-600 text-xs sm:text-sm font-roboto">About</span>
-          <span className="text-gray-600 text-xs sm:text-sm font-roboto">CGU</span>
-          <span className="text-gray-600 text-xs sm:text-sm font-roboto">Contact</span>
-          <span className="text-gray-600 text-xs sm:text-sm font-roboto">Support</span>
+        <footer className="flex flex-wrap items-center justify-center gap-4 p-4 sm:justify-start sm:p-6 sm:gap-6 lg:gap-8">
+          <span className="text-xs text-gray-600 sm:text-sm font-roboto">About</span>
+          <span className="text-xs text-gray-600 sm:text-sm font-roboto">CGU</span>
+          <span className="text-xs text-gray-600 sm:text-sm font-roboto">Contact</span>
+          <span className="text-xs text-gray-600 sm:text-sm font-roboto">Support</span>
         </footer>
     </div>
   );
