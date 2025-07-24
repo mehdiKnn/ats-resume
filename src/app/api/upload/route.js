@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
+import { parsePDF } from '@/lib/pdfParser';
+import { processCVWithAI } from '@/lib/cvProcessor';
 
 export async function POST(request) {
   try {
+    console.log('API Upload: Starting PDF processing...');
     const formData = await request.formData();
     const file = formData.get('pdf');
     
@@ -13,37 +16,34 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 });
     }
 
-    // Step 1: Parse PDF
-    const parseResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/parse-pdf`, {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!parseResponse.ok) {
-      const parseError = await parseResponse.json();
-      return NextResponse.json(parseError, { status: parseResponse.status });
+    console.log('API Upload: File validated, parsing PDF...');
+    // Step 1: Parse PDF directly
+    let parsedData;
+    try {
+      parsedData = await parsePDF(file);
+      console.log('API Upload: PDF parsed successfully');
+    } catch (parseError) {
+      console.error('API Upload: PDF parsing failed:', parseError);
+      return NextResponse.json({ 
+        error: `PDF parsing failed: ${parseError.message}` 
+      }, { status: 500 });
     }
-
-    const parsedData = await parseResponse.json();
     
-    // Step 2: Process with AI
-    const processResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/process-cv`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        extractedText: parsedData.content.fullText,
-        metadata: parsedData.metadata,
-      }),
-    });
-
-    if (!processResponse.ok) {
-      const processError = await processResponse.json();
-      return NextResponse.json(processError, { status: processResponse.status });
+    console.log('API Upload: Processing with AI...');
+    // Step 2: Process with AI directly
+    let processedData;
+    try {
+      processedData = await processCVWithAI(
+        parsedData.content.fullText,
+        parsedData.metadata
+      );
+      console.log('API Upload: AI processing completed');
+    } catch (aiError) {
+      console.error('API Upload: AI processing failed:', aiError);
+      return NextResponse.json({ 
+        error: `AI processing failed: ${aiError.message}` 
+      }, { status: 500 });
     }
-
-    const processedData = await processResponse.json();
 
     // Combine both parsed and processed data
     const structuredData = {
