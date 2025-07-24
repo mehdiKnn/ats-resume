@@ -16,12 +16,14 @@ export async function POST(request) {
         { status: 500 }
       );
     }
-
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
-    const prompt = `Extrais et structure toutes les données de ce CV selon le schéma JSON EXACT suivant. Retourne UNIQUEMENT le JSON valide, sans commentaires ni texte supplémentaire :
-
+    const prompt = `
+Use the CV Text to fill the JSON sections schema below
+- Do not modify the JSON schema, respect it strictly
+- Respect the "rendering_rules" in the JSON when filling the section JSON sections key.
+- If there is a full month in any language use for example Jan over Janvier ( French ) or Enero ( Spanish)
 {
   "cv_template": {
     "metadata": {
@@ -205,17 +207,10 @@ export async function POST(request) {
       "date_format": "MMM YYYY",
       "hide_empty_sections": true,
       "max_items_per_section": "No limit for now",
-      "truncate_descriptions_at": 600
+      "truncate_descriptions_at": "No limit for now",
     }
   }
 }
-
-IMPORTANT : 
-- N'inclus QUE les sections qui ont du contenu réel dans le CV
-- Extrait toutes les informations disponibles de TOUTES LES PAGES
-- Utilise les dates au format trouvé dans le CV
-- Si des informations manquent, omets ces champs plutôt que de mettre des valeurs par défaut
-- Ce CV peut avoir plusieurs pages, assure-toi de traiter tout le contenu
 
 CV Text:
 ${extractedText}`;
@@ -223,7 +218,6 @@ ${extractedText}`;
     const cvDataResponse = await model.generateContent(prompt);
 
     let cvData = null;
-    let cvSections = [];
     
     try {
       const cvContent = cvDataResponse.response?.text() || '';
@@ -231,50 +225,11 @@ ${extractedText}`;
       const jsonMatch = contentString.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         cvData = JSON.parse(jsonMatch[0]);
-        
-        // Create backward-compatible sections for display
-        const cvDataTyped = cvData;
-        const sections = cvDataTyped.cv_template?.sections || {};
-        
-        const headerSection = sections.header;
-        if (headerSection) {
-          cvSections.push({ title: 'En-tête', content: `${headerSection.name || ''}\n${headerSection.title || ''}` });
-        }
-        
-        const summarySection = sections.summary;
-        if (summarySection) {
-          cvSections.push({ title: summarySection.section_title || 'Summary', content: summarySection.content || '' });
-        }
-        
-        const experienceSection = sections.experience;
-        if (experienceSection?.items?.length) {
-          const content = experienceSection.items.map((item) => 
-            `${item.title || ''} - ${item.company || ''} (${item.dates?.start || ''} - ${item.dates?.end || ''})`
-          ).join('\n');
-          cvSections.push({ title: experienceSection.section_title || 'Experience', content });
-        }
-        
-        const educationSection = sections.education;
-        if (educationSection?.items?.length) {
-          const content = educationSection.items.map((item) => 
-            `${item.degree || ''} - ${item.institution || ''} (${item.dates?.start || ''} - ${item.dates?.end || ''})`
-          ).join('\n');
-          cvSections.push({ title: educationSection.section_title || 'Education', content });
-        }
-        
-        const skillsSection = sections.skills;
-        if (skillsSection?.categories?.length) {
-          const content = skillsSection.categories.map((cat) => 
-            `${cat.name || ''}: ${(cat.items || []).join(', ')}`
-          ).join('\n');
-          cvSections.push({ title: skillsSection.section_title || 'Skills', content });
-        }
       }
     } catch {
-      console.warn('Could not parse CV data as JSON, using fallback structure');
-      cvSections = [{ title: 'CV Content', content: extractedText }];
+      console.warn('Could not parse CV data as JSON');
     }
-
+    console.log(cvData)
     // Generate LaTeX from structured data if available
     let latex = '';
     if (cvData && cvData.cv_template) {
@@ -287,7 +242,6 @@ ${extractedText}`;
 
     const processedData = {
       cv_data: cvData,
-      sections: cvSections,
       latex: latex,
       processing: {
         method: 'Gemini 2.0 Flash',

@@ -9,14 +9,45 @@ export default function Home() {
   const [cvData, setCvData] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const paymentSectionRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
+    if (selectedFile && selectedFile.type === 'application/pdf') {
       setFile(selectedFile);
       setError(null);
+    } else if (selectedFile) {
+      setError('Please select a PDF file');
     }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.type === 'application/pdf') {
+      setFile(droppedFile);
+      setError(null);
+    } else if (droppedFile) {
+      setError('Please drop a PDF file');
+    }
+  };
+
+  const handleBoxClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleUpload = async () => {
@@ -96,56 +127,95 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
-      <div className="w-full">
-        <h1 className="text-4xl font-bold text-center mb-16 text-blue-600">
-          Transforme ton CV design en CV ATS<br />en seulement 1mn
+    <div className="min-h-screen flex flex-col" style={{ backgroundImage: 'url(/background_blur.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      {/* Header */}
+      <header className="flex justify-between items-center p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl font-roboto font-black text-black">
+          ResumeATS
         </h1>
+        <button className="px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-roboto font-bold">
+          contact
+        </button>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-roboto font-black text-black mb-4 leading-tight">
+            Transforme 🚀 ton CV design<br />
+            en Cv ATS en seulement 1mn ⚡
+          </h2>
+          <p className="text-gray-800 text-lg sm:text-xl font-roboto font-medium px-4 sm:px-0">
+            Fais partie des CV que les recruteurs lisent vraiment
+          </p>
+        </div>
         
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 max-w-lg mx-auto">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-12 mb-6 sm:mb-8 max-w-xs sm:max-w-lg lg:max-w-2xl mx-auto w-full">
           <div className="text-center">
-            {/* Cloud upload icon */}
-            <div className="mb-4">
-              <svg className="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
+            {/* Drag and Drop Area */}
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 mb-6 cursor-pointer transition-colors ${
+                isDragging 
+                  ? 'border-orange-500 bg-orange-50' 
+                  : 'border-gray-300 hover:border-orange-400 hover:bg-gray-50'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={handleBoxClick}
+            >
+              {/* Upload icon */}
+              <div className="mb-4">
+                <svg className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              
+              <p className="text-base sm:text-lg text-gray-600 font-roboto">
+                Cliquez ici ou glissez votre PDF
+              </p>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="hidden"
+              />
             </div>
             
-            <p className="text-base text-gray-600 mb-6">
-              Drag & drop your PDF file here or
-            </p>
-            
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="hidden"
-              id="pdf-upload"
-            />
-            <label
-              htmlFor="pdf-upload"
-              className="cursor-pointer inline-block px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-            >
-              Choose PDF file
-            </label>
-            
             {file && (
-              <p className="mt-3 text-sm text-gray-600">
+              <p className="mb-4 text-sm text-gray-600 font-roboto">
                 Selected: {file.name}
               </p>
             )}
+            
+            <button
+              onClick={handleUpload}
+              disabled={!file || loading}
+              className="px-6 py-3 sm:px-8 sm:py-4 lg:px-10 lg:py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-roboto font-bold text-base sm:text-lg"
+            >
+              {loading ? 'Processing...' : 'Optimiser mon CV'}
+            </button>
           </div>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <button
-            onClick={handleUpload}
-            disabled={!file || loading}
-            className="px-12 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold text-lg"
-          >
-            {loading ? 'Processing...' : 'GO'}
-          </button>
+        {/* Trust indicators */}
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8 text-xs sm:text-sm px-4 sm:px-0">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">✅</span>
+            <span className="text-gray-700 font-roboto text-xs sm:text-sm">100 % sécurisé</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📄</span>
+            <span className="text-gray-700 font-roboto text-xs sm:text-sm">+10 000 CV optimisés</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">💸</span>
+            <span className="text-gray-700 font-roboto text-xs sm:text-sm">Satisfait ou remboursé</span>
+          </div>
         </div>
+
 
         {error && (
           <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
@@ -154,127 +224,78 @@ export default function Home() {
         )}
 
         {result && (
-          <div ref={paymentSectionRef} className="max-w-7xl mx-auto mt-8 min-h-screen">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-screen py-8">
-              {/* CV Preview */}
-              <PDFPreview cvData={cvData} />
-              
-              {/* Payment Section */}
-              <div className="bg-white rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-blue-600 mb-4">Ton cv est prêt !</h2>
-                
-                <p className="text-gray-600 mb-4 text-sm">
-                  ton cv a bien était transformé et optimisé pour les logiciels ATS !
-                </p>
-                
-                {/* Features */}
-                <div className="mb-4 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
+          <div ref={paymentSectionRef} className="w-full">
+            <div className="min-h-screen pb-16">
+              <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+                {/* CV Preview - Left Side - Centered */}
+                <div className="p-4 sm:p-8 flex items-center justify-center">
+                  <div className="h-[80vh] overflow-y-auto overflow-x-auto">
+                    <div className="min-w-fit">
+                      <PDFPreview cvData={cvData} />
                     </div>
-                    <span className="text-gray-700 text-sm">Téléchargement immédiat après paiement</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-700 text-sm">Support client 24/7</span>
                   </div>
                 </div>
                 
-                {/* Price */}
-                <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-blue-600 mb-3">0,99€</div>
-                  <button
-                    onClick={generatePDF}
-                    disabled={!cvData || loading}
-                    className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-semibold mb-4"
-                  >
-                    {loading ? 'Generating...' : '📥 Download'}
-                  </button>
-                </div>
-                
-                {/* Payment Form */}
-                <div className="border-t pt-4">
-                  <h3 className="text-base font-medium text-gray-400 mb-4">Stripe Payment Form</h3>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-                      <input 
-                        type="email" 
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="your@email.com"
-                      />
+                {/* CV Benefits - Right Side - Centered */}
+                <div className="p-8 flex flex-col items-center justify-center">
+                  <div className="max-w-md w-full">
+                    {/* Header with celebration emoji */}
+                    <div className="text-center mb-8">
+                      <div className="text-4xl mb-4">🎉</div>
+                      <h2 className="text-3xl font-roboto font-black text-black mb-4">
+                        Ton CV optimisé est prêt !
+                      </h2>
+                      <p className="text-gray-600 text-lg font-roboto mb-8">
+                        Il est maintenant parfaitement lisible par les logiciels de recrutement ATS.
+                      </p>
                     </div>
                     
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Card information</label>
-                      <div className="space-y-2">
-                        <div className="relative">
-                          <input 
-                            type="text" 
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="1234 1234 1234 1234"
-                          />
-                          <div className="absolute right-3 top-2 flex gap-1">
-                            <div className="w-5 h-3 bg-blue-600 rounded text-xs text-white flex items-center justify-center">VISA</div>
-                            <div className="w-5 h-3 bg-red-600 rounded text-xs text-white flex items-center justify-center">MC</div>
-                          </div>
+                    {/* CV Benefits */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input 
-                            type="text" 
-                            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="MM / YY"
-                          />
-                          <input 
-                            type="text" 
-                            className="px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="CVC"
-                          />
+                        <span className="text-gray-700 text-base font-roboto">Ton CV a bien été transformé pour les ATS</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
                         </div>
+                        <span className="text-gray-700 text-base font-roboto">Prêt à l'emploi</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span className="text-gray-700 text-base font-roboto">Optimisé par IA</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span className="text-gray-700 text-base font-roboto">ATS friendly</span>
                       </div>
                     </div>
                     
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Cardholder name</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Full name on card"
-                      />
+                    {/* Download Button */}
+                    <div className="mt-8">
+                      <button
+                        onClick={generatePDF}
+                        disabled={!cvData || loading}
+                        className="w-full py-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors font-roboto font-bold text-lg"
+                      >
+                        {loading ? 'Génération...' : 'Télécharger mon CV optimisé'}
+                      </button>
                     </div>
-                    
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Country or region</label>
-                      <select className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option>United States</option>
-                        <option>France</option>
-                        <option>Other</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <input 
-                        type="text" 
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="ZIP"
-                      />
-                    </div>
-                    
-                    <button className="w-full py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors font-medium">
-                      Pay
-                    </button>
-                    
-                    <p className="text-xs text-gray-500 text-center">
-                      By clicking Pay, you agree to the Link Terms and Privacy Policy.
-                    </p>
                   </div>
                 </div>
               </div>
@@ -282,6 +303,15 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Footer - Only show when not in results view */}
+
+        <footer className="flex flex-wrap justify-center sm:justify-start items-center p-4 sm:p-6 gap-4 sm:gap-6 lg:gap-8">
+          <span className="text-gray-600 text-xs sm:text-sm font-roboto">About</span>
+          <span className="text-gray-600 text-xs sm:text-sm font-roboto">CGU</span>
+          <span className="text-gray-600 text-xs sm:text-sm font-roboto">Contact</span>
+          <span className="text-gray-600 text-xs sm:text-sm font-roboto">Support</span>
+        </footer>
     </div>
   );
 }

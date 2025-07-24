@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
 import path from 'path';
 
+//TODO : Use a more robust way to resolve the worker path in production
 GlobalWorkerOptions.workerSrc = `file://${path.resolve(
     'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'
 )}`;

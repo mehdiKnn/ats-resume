@@ -93,7 +93,7 @@ export default function PDFPreview({ cvData }) {
   }
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden min-h-[60vh] lg:min-h-full">
+    <div className="">
       <div className="h-full overflow-auto">
         <Document
           file={pdfData}
@@ -117,12 +117,6 @@ export default function PDFPreview({ cvData }) {
           ))}
         </Document>
       </div>
-      
-      {numPages && (
-        <div className="bg-gray-50 px-4 py-2 text-center text-sm text-gray-600 border-t">
-          {numPages} page{numPages > 1 ? 's' : ''}
-        </div>
-      )}
     </div>
   );
 }

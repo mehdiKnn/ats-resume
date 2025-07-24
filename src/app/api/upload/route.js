@@ -58,7 +58,6 @@ export async function POST(request) {
         pages: parsedData.metadata.pages,
       },
       cv_data: processedData.cv_data,
-      sections: processedData.sections,
       content: parsedData.content,
       links: parsedData.links,
       latex: processedData.latex,

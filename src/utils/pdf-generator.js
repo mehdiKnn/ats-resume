@@ -10,15 +10,37 @@ const escapeLaTeX = (text) => {
     .replace(/\]/g, '{]}');
 };
 
-// Helper function to format dates
+// Helper function to format dates - preserves original format
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
+  
+  // Return the original string if it's already a clean format
+  const cleanStr = String(dateStr).trim();
+  
+  // If it's just a year (4 digits), keep it as is
+  if (/^\d{4}$/.test(cleanStr)) {
+    return cleanStr;
+  }
+  
+  // If it's already in a good format, keep it
+  if (/^\d{4}-\d{2}$/.test(cleanStr) || /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}$/i.test(cleanStr)) {
+    return cleanStr;
+  }
+  
+  // For other formats, try to parse and format conservatively
   try {
     const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return '';
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    if (isNaN(date.getTime())) return cleanStr; // Return original if can't parse
+    
+    // If the original was just a year, extract just the year
+    if (/^\d{4}/.test(cleanStr)) {
+      return date.getFullYear().toString();
+    }
+    
+    // Otherwise use month + year format
+    return date.toLocaleDateString('en-US', {year: 'numeric' });
   } catch {
-    return '';
+    return cleanStr; // Return original if parsing fails
   }
 };
 
